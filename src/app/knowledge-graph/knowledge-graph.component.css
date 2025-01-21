@@ -1,0 +1,16 @@
+/* Optional styles to improve the visual of the nodes and links */
+.node {
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+  
+  .link {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+  
+  .label {
+    font-size: 12px;
+    fill: #333;
+  }
+  
