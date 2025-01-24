@@ -4,36 +4,36 @@ import { GraphService } from '../graph.service';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../services/api.service';
 
-
 @Component({
   selector: 'app-knowledge-graph',
   templateUrl: './knowledge-graph.component.html',
   styleUrls: ['./knowledge-graph.component.css'],
-  providers: [ApiService]
+  providers: [ApiService],
 })
 export class KnowledgeGraphComponent implements OnInit {
-
   private nodes: any[] = [];
   private links: any[] = [];
   private url = '/jsonRes/getNodesByLabel.json';
 
-  constructor(private el: ElementRef, private graphService: GraphService, private http: HttpClient, private api: ApiService) { }
-
+  constructor(
+    private el: ElementRef,
+    private graphService: GraphService,
+    private http: HttpClient,
+    private api: ApiService
+  ) {}
 
   ngOnInit() {
-
     // Define the graph data
     // this.http.get<{ nodes: any[] }>(this.url).subscribe((data) => {
     //   console.log('nodes', data)
     //   return this.nodes = data.nodes;
     // })
 
-    this.api.getNodesByLabel().then((response) =>  {
-      console.log('res', response.data.result[0].nodes)
+    this.api.getNodesByLabel().then((response) => {
+      console.log('res', response.data.result[0].nodes);
       this.nodes = response.data.result[0].nodes;
       this.loadGraph(this.nodes);
-    })
-
+    });
   }
 
   loadGraph(nodes: any[]) {
@@ -46,7 +46,7 @@ export class KnowledgeGraphComponent implements OnInit {
       ],
     };
 
-    console.log('data', data)
+    console.log('data', data);
 
     // Set up the SVG container dimensions
     const width = 1080;
@@ -57,6 +57,8 @@ export class KnowledgeGraphComponent implements OnInit {
       .append('svg')
       .attr('width', width)
       .attr('height', height);
+
+    const labelGroup = svg.append('g').attr('class', 'labels-group');
 
     // Create a force simulation
     const simulation = d3
@@ -99,21 +101,18 @@ export class KnowledgeGraphComponent implements OnInit {
           .on('start', dragstarted)
           .on('drag', dragged)
           .on('end', dragended)
-      );
+      )
+      .on('mouseover', function (event, d) {
+        showLabel(d, event);
+      })
+      .on('mouseout', function () {
+        hideLabel();
+      })
+      .on('click', function (event, d) {
+        toggleLabel(d, event);
+      });
 
     // Add labels to nodes
-    svg
-      .append('g')
-      .selectAll('.label')
-      .data(data.nodes)
-      .enter()
-      .append('text')
-      .attr('class', 'label')
-      .attr('x', (d: any) => d.x)
-      .attr('y', (d: any) => d.y)
-      .attr('dx', 12)
-      .attr('dy', '.35em')
-      .text((d: any) => d.label);
 
     // Update positions on each simulation tick
     simulation.on('tick', () => {
@@ -125,10 +124,10 @@ export class KnowledgeGraphComponent implements OnInit {
 
       node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
 
-      svg
-        .selectAll('.label')
-        .attr('x', (d: any) => d.x)
-        .attr('y', (d: any) => d.y);
+      labelGroup
+        .selectAll('.hover-label, .click-label')
+        .attr('x', (d: any) => d.x + 25)
+        .attr('y', (d: any) => d.y + 5);
     });
 
     // Drag functions
@@ -148,6 +147,43 @@ export class KnowledgeGraphComponent implements OnInit {
       d.fx = event.x; // Fix the node's x position
       d.fy = event.y; // Fix the node's y position
     }
-  }
 
+    // Display label
+
+    function showLabel(d: any, event: any) {
+      labelGroup
+        .append('text')
+        .attr('class', 'hover-label')
+        .attr('x', d.x + 25) // Adjust horizontal offset
+        .attr('y', d.y + 5) // Adjust vertical offset
+        .text(d.label || 'No Data') // Replace 'property' with your property key
+        .style('font-size', '12px')
+        .style('fill', 'black');
+    }
+
+    // Function to hide label on mouseout
+    function hideLabel() {
+      labelGroup.selectAll('.hover-label').remove();
+    }
+
+    // Function to toggle label visibility on click
+    function toggleLabel(d: any, event: any) {
+      const existingLabel = labelGroup.select(
+        `.click-label[data-id="${d.id}"]`
+      );
+      if (!existingLabel.empty()) {
+        existingLabel.remove(); // Remove the label if it already exists
+      } else {
+        labelGroup
+          .append('text')
+          .attr('class', 'click-label')
+          .attr('data-id', d.id) // Use a unique identifier for each label
+          .attr('x', d.x + 25)
+          .attr('y', d.y + 5)
+          .text(d.label || 'No Data')
+          .style('font-size', '12px')
+          .style('fill', 'black');
+      }
+    }
+  }
 }
