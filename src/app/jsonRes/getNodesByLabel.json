@@ -1,0 +1,7 @@
+{
+    "nodes": [
+        { "id": "Node 1", "label": "Entity 1" },
+        { "id": "Node 2", "label": "Entity 2" },
+        { "id": "Node 3", "label": "Entity 3" }
+    ]
+}

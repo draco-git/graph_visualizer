@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import * as d3 from 'd3';
+import { GraphService } from '../graph.service';
+
 
 @Component({
   selector: 'app-graph-visualizer',
@@ -26,20 +28,32 @@ import * as d3 from 'd3';
   ],
 })
 export class GraphVisualizerComponent implements OnInit {
-  private graphData = {
-    nodes: [
-      { id: '1', label: 'Node 1' },
-      { id: '2', label: 'Node 2' },
-      { id: '3', label: 'Node 3' },
-    ],
-    links: [
-      { source: '1', target: '2' },
-      { source: '2', target: '3' },
-      { source: '3', target: '1' },
-    ],
-  };
+  private nodes: any[] = [];
+  private links: any[] = [];
+  
+  // private graphData = {
+  //   nodes: [
+  //     { id: '1', label: 'Node 1' },
+  //     { id: '2', label: 'Node 2' },
+  //     { id: '3', label: 'Node 3' },
+  //   ],
+  //   links: [
+  //     { source: '1', target: '2' },
+  //     { source: '2', target: '3' },
+  //     { source: '3', target: '1' },
+  //   ],
+  // };
+
+  constructor (private graphService: GraphService) {}
 
   ngOnInit(): void {
+    this.loadGraph();
+  }
+
+  private async loadGraph(): Promise<void> {
+
+    this.nodes = await this.graphService.getNodesByLabel('Person')
+    this.links = await this.graphService.getRelationshipsByNodeId('1')
     this.createGraph();
   }
 
@@ -48,8 +62,8 @@ export class GraphVisualizerComponent implements OnInit {
     const width = parseInt(svg.style('width'));
     const height = parseInt(svg.style('height'));
 
-    const simulation = d3.forceSimulation(this.graphData.nodes as any)
-      .force('link', d3.forceLink(this.graphData.links as any).id((d: any) => d.id))
+    const simulation = d3.forceSimulation(this.nodes as any)
+      .force('link', d3.forceLink(this.links as any).id((d: any) => d.id))
       .force('charge', d3.forceManyBody())
       .force('center', d3.forceCenter(width / 2, height / 2));
 
@@ -57,7 +71,7 @@ export class GraphVisualizerComponent implements OnInit {
       .append('g')
       .attr('class', 'links')
       .selectAll('line')
-      .data(this.graphData.links)
+      .data(this.links)
       .enter()
       .append('line')
       .attr('stroke-width', 2)
@@ -67,7 +81,7 @@ export class GraphVisualizerComponent implements OnInit {
       .append('g')
       .attr('class', 'nodes')
       .selectAll('circle')
-      .data(this.graphData.nodes)
+      .data(this.nodes)
       .enter()
       .append('circle')
       .attr('r', 10)
@@ -83,7 +97,7 @@ export class GraphVisualizerComponent implements OnInit {
       .append('g')
       .attr('class', 'labels')
       .selectAll('text')
-      .data(this.graphData.nodes)
+      .data(this.nodes)
       .enter()
       .append('text')
       .attr('dy', -15)
